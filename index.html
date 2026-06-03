@@ -3,99 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hera Video Studio</title>
+    <title>AI Pro Video Studio</title>
     <style>
-        :root {
-            --primary: #8b5cf6;
-            --secondary: #ec4899;
-            --bg-color: #0f172a;
-            --card-bg: #1e293b;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-        }
-        body { 
-            font-family: 'Inter', -apple-system, sans-serif; 
-            background-color: var(--bg-color); 
-            color: var(--text-main); 
-            margin: 0; padding: 40px 20px; 
-            display: flex; justify-content: center; 
-            background-image: radial-gradient(circle at top right, #1e1b4b, #0f172a);
-            min-height: 100vh;
-        }
-        .container { 
-            background: rgba(30, 41, 59, 0.7); 
-            backdrop-filter: blur(12px);
-            padding: 35px; 
-            border-radius: 20px; 
-            width: 100%; 
-            max-width: 550px; 
-            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); 
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-        h2 { text-align: center; margin-top: 0; margin-bottom: 30px; font-size: 28px; 
-             background: -webkit-linear-gradient(45deg, var(--primary), var(--secondary)); 
-             -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        :root { --primary: #8b5cf6; --secondary: #ec4899; --bg-color: #0f172a; --text-main: #f8fafc; --text-muted: #94a3b8; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; padding: 40px 20px; display: flex; justify-content: center; background-image: radial-gradient(circle at top right, #1e1b4b, #0f172a); min-height: 100vh; }
+        .container { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); padding: 35px; border-radius: 20px; width: 100%; max-width: 550px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); }
+        h2 { text-align: center; margin-top: 0; margin-bottom: 30px; font-size: 28px; background: linear-gradient(45deg, var(--primary), var(--secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .form-group { margin-bottom: 20px; }
-        label { display: block; margin-bottom: 8px; font-weight: 600; font-size: 13px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;}
-        input[type="text"], input[type="password"], select, textarea { 
-            width: 100%; padding: 14px; border-radius: 10px; border: 1px solid #334155; 
-            background-color: rgba(15, 23, 42, 0.6); color: white; box-sizing: border-box; 
-            font-size: 15px; transition: all 0.3s ease; outline: none;
-        }
-        input:focus, select:focus, textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2); }
-        textarea { resize: vertical; min-height: 80px; }
+        label { display: block; margin-bottom: 8px; font-weight: 600; font-size: 13px; color: var(--text-muted); }
+        input, select, textarea { width: 100%; padding: 14px; border-radius: 10px; border: 1px solid #334155; background-color: rgba(15, 23, 42, 0.6); color: white; box-sizing: border-box; font-size: 15px; }
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .upload-box { position: relative; border: 2px dashed #475569; border-radius: 12px; background: rgba(15, 23, 42, 0.4); height: 120px; display: flex; align-items: center; justify-content: center; text-align: center; overflow: hidden; }
+        .file-input { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; z-index: 2; }
+        .preview-img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; display: none; z-index: 1; }
+        .remove-btn { position: absolute; top: 8px; right: 8px; background: #ef4444; color: white; width: 26px; height: 26px; border-radius: 50%; display: none; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; cursor: pointer; z-index: 10; }
         
-        /* STYLE UNTUK UPLOAD GAMBAR SEPERTI REFERENSI */
-        .upload-box {
-            position: relative;
-            border: 2px dashed #475569;
-            border-radius: 12px;
-            background-color: rgba(15, 23, 42, 0.4);
-            height: 120px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            overflow: hidden;
-            transition: 0.3s;
-        }
-        .upload-box:hover { border-color: var(--primary); background: rgba(139, 92, 246, 0.1); }
-        .upload-text { font-size: 13px; color: var(--text-muted); pointer-events: none; padding: 10px; }
-        .file-input {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            opacity: 0; cursor: pointer; z-index: 2;
-        }
-        .preview-img {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            object-fit: cover;
-            display: none; z-index: 1;
-        }
-        .remove-btn {
-            position: absolute;
-            top: 8px; right: 8px;
-            background-color: #ef4444; color: white;
-            width: 26px; height: 26px;
-            border-radius: 50%;
-            display: none; align-items: center; justify-content: center;
-            font-size: 14px; font-weight: bold;
-            cursor: pointer; z-index: 10;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
-        }
+        button.submit-btn, a.download-btn { width: 100%; padding: 16px; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 15px; display: block; box-sizing: border-box; }
+        button.submit-btn { background: linear-gradient(to right, var(--primary), var(--secondary)); color: white; }
+        button.submit-btn:disabled { opacity: 0.7; cursor: not-allowed; }
+        
+        /* Gaya Khusus Tombol Download */
+        a.download-btn { background: linear-gradient(to right, #10b981, #059669); color: white; text-align: center; text-decoration: none; display: none; }
+        a.download-btn:hover { box-shadow: 0 10px 20px -10px #10b981; }
 
-        button.submit-btn { 
-            width: 100%; padding: 16px; background: linear-gradient(to right, var(--primary), var(--secondary)); 
-            color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; 
-            cursor: pointer; margin-top: 15px; transition: transform 0.2s, box-shadow 0.2s; 
-        }
-        button.submit-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 20px -10px var(--secondary); }
-        button.submit-btn:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
-        #response-box { 
-            margin-top: 25px; padding: 20px; border-radius: 10px; background-color: rgba(0,0,0,0.3); 
-            display: none; font-size: 14px; word-break: break-all; border-left: 4px solid var(--primary); 
-        }
+        #response-box { margin-top: 25px; padding: 20px; border-radius: 10px; background-color: rgba(0,0,0,0.3); display: none; font-size: 14px; border-left: 4px solid var(--primary); text-align: center; }
+        .loader { border: 4px solid rgba(255,255,255,0.1); border-top: 4px solid var(--primary); border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 10px auto; display: none; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        #result-video { width: 100%; border-radius: 10px; margin-top: 15px; display: none; border: 2px solid var(--primary); background-color: black; }
     </style>
 </head>
 <body>
@@ -103,141 +37,130 @@
     <div class="container">
         <h2>AI Pro Video Studio</h2>
         <form id="videoForm">
-            <div class="form-group">
-                <label>API Key Leonardo:</label>
-                <input type="password" id="apiKey" name="apiKey" placeholder="Sk-xxxxxxxxxxx" required>
-            </div>
-
+            <div class="form-group"><label>API Key Leonardo:</label><input type="password" id="apiKey" name="apiKey" required></div>
             <div class="form-group">
                 <label>Model AI Video:</label>
                 <select name="model" id="modelSelect" required>
-                    <option value="kling-3.0">Kling 3.0 (Cinematic & Realism)</option>
-                    <option value="seedance-2.0">Seedance 2.0 (Dynamic Motion)</option>
-                    <option value="VEO3_1">Google Veo 3.1 (High Consistency)</option>
+                    <option value="kling-3.0">Kling 3.0</option>
+                    <option value="seedance-2.0">Seedance 2.0</option>
+                    <option value="VEO3_1">Google Veo 3.1</option>
                 </select>
             </div>
-
-            <div class="form-group">
-                <label>Prompt (Perintah Video):</label>
-                <textarea name="prompt" placeholder="Contoh: Animate this landscape with birds flying and wind blowing through trees..." required></textarea>
-            </div>
-
+            <div class="form-group"><label>Prompt:</label><textarea name="prompt" required></textarea></div>
+            
             <div class="form-group">
                 <label>Gambar 1 (Awal - Wajib):</label>
-                <div class="upload-box" id="box1">
-                    <span class="upload-text" id="text1">Klik Upload Foto 1</span>
+                <div class="upload-box">
+                    <span id="text1">Klik Upload</span>
                     <input type="file" id="image1" name="images" accept="image/*" class="file-input" required>
-                    <img id="preview1" class="preview-img" src="" alt="Preview">
-                    <div class="remove-btn" id="remove1">X</div>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label>Gambar 2 (Akhir - Opsional):</label>
-                <div class="upload-box" id="box2">
-                    <span class="upload-text" id="text2">Klik Upload Foto 2</span>
-                    <input type="file" id="image2" name="images" accept="image/*" class="file-input">
-                    <img id="preview2" class="preview-img" src="" alt="Preview">
-                    <div class="remove-btn" id="remove2">X</div>
+                    <img id="preview1" class="preview-img"><div class="remove-btn" id="remove1">X</div>
                 </div>
             </div>
 
             <div class="grid-2">
-                <div class="form-group">
-                    <label>Durasi:</label>
-                    <select name="duration" id="durationSelect" required>
-                        </select>
-                </div>
-                <div class="form-group">
-                    <label>Resolusi:</label>
-                    <select name="resolution" required>
-                        <option value="RESOLUTION_1080">1080p (FHD)</option>
-                        <option value="RESOLUTION_720">720p (HD)</option>
-                    </select>
-                </div>
+                <div class="form-group"><label>Durasi:</label><select name="duration" id="durationSelect"></select></div>
+                <div class="form-group"><label>Resolusi:</label><select name="resolution"><option value="RESOLUTION_1080">1080p</option></select></div>
             </div>
 
             <button type="submit" id="submitBtn" class="submit-btn">Mulai Generate Video</button>
         </form>
 
-        <div id="response-box"></div>
+        <div id="response-box">
+            <div id="status-text">Memproses...</div>
+            <div class="loader" id="loading-spinner"></div>
+            
+            <video id="result-video" controls></video>
+            <a id="downloadBtn" href="#" download="Hasil_Video_AI.mp4" class="download-btn">⬇️ Download Video</a>
+        </div>
     </div>
 
     <script>
-        // 1. SIMPAN API KEY OTOMATIS
         const apiKeyInput = document.getElementById('apiKey');
         if (localStorage.getItem('saved_api_key')) apiKeyInput.value = localStorage.getItem('saved_api_key');
 
-        // 2. LOGIKA UPLOAD GAMBAR & PREVIEW (FOTO MUNCUL)
-        function setupImagePreview(inputId, previewId, textId, removeId) {
-            const input = document.getElementById(inputId);
-            const preview = document.getElementById(previewId);
-            const text = document.getElementById(textId);
-            const removeBtn = document.getElementById(removeId);
+        document.getElementById('image1').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                document.getElementById('preview1').src = URL.createObjectURL(file);
+                document.getElementById('preview1').style.display = 'block';
+                document.getElementById('remove1').style.display = 'flex';
+                document.getElementById('text1').style.display = 'none';
+            }
+        });
+        document.getElementById('remove1').addEventListener('click', function(e) {
+            e.preventDefault(); document.getElementById('image1').value = '';
+            document.getElementById('preview1').style.display = 'none';
+            this.style.display = 'none'; document.getElementById('text1').style.display = 'block';
+        });
 
-            input.addEventListener('change', function() {
-                const file = this.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        preview.src = e.target.result;
-                        preview.style.display = 'block';
-                        text.style.display = 'none';
-                        removeBtn.style.display = 'flex';
-                    }
-                    reader.readAsDataURL(file);
-                }
-            });
-
-            removeBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation(); // Mencegah kotak upload ter-klik saat menekan X
-                input.value = '';
-                preview.src = '';
-                preview.style.display = 'none';
-                text.style.display = 'block';
-                removeBtn.style.display = 'none';
-            });
-        }
-        setupImagePreview('image1', 'preview1', 'text1', 'remove1');
-        setupImagePreview('image2', 'preview2', 'text2', 'remove2');
-
-        // 3. LOGIKA SMART DURATION (DURASI MENYESUAIKAN MODEL)
         const modelSelect = document.getElementById('modelSelect');
         const durationSelect = document.getElementById('durationSelect');
-
         function updateDurationOptions() {
-            const selectedModel = modelSelect.value;
-            durationSelect.innerHTML = ''; // Kosongkan opsi sebelumnya
-            
-            if (selectedModel === 'VEO3_1') {
-                durationSelect.add(new Option('5 Detik', '5'));
-                durationSelect.add(new Option('8 Detik', '8'));
-            } else {
-                // Untuk Kling 3.0 dan Seedance 2.0
-                durationSelect.add(new Option('5 Detik', '5'));
-                durationSelect.add(new Option('10 Detik', '10'));
-                durationSelect.add(new Option('15 Detik', '15'));
+            durationSelect.innerHTML = '';
+            if (modelSelect.value === 'VEO3_1') { durationSelect.add(new Option('5 Detik', '5')); durationSelect.add(new Option('8 Detik', '8')); }
+            else { durationSelect.add(new Option('5 Detik', '5')); durationSelect.add(new Option('10 Detik', '10')); durationSelect.add(new Option('15 Detik', '15')); }
+        }
+        modelSelect.addEventListener('change', updateDurationOptions); updateDurationOptions();
+
+        // LOGIKA CEK STATUS BERKALA
+        async function checkJobStatus(jobId, apiKey, backendUrl) {
+            const statusText = document.getElementById('status-text');
+            const videoPlayer = document.getElementById('result-video');
+            const spinner = document.getElementById('loading-spinner');
+            const downloadBtn = document.getElementById('downloadBtn');
+
+            try {
+                const response = await fetch(`${backendUrl.replace('/generate-video', '/check-status')}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ jobId: jobId, apiKey: apiKey })
+                });
+                const data = await response.json();
+
+                if (data.status === 'COMPLETE' && data.video_url) {
+                    statusText.innerHTML = `<span style="color: #4ade80; font-weight:bold;">Video Berhasil Dibuat! 🎉</span>`;
+                    spinner.style.display = 'none';
+                    
+                    // Tampilkan Video
+                    videoPlayer.src = data.video_url;
+                    videoPlayer.style.display = 'block';
+                    
+                    // Tampilkan Tombol Download
+                    downloadBtn.href = data.video_url;
+                    downloadBtn.style.display = 'block';
+                    
+                    document.getElementById('submitBtn').disabled = false;
+                } else if (data.status === 'FAILED') {
+                    statusText.innerHTML = `<span style="color: #f87171;">Pembuatan video gagal dari server Leonardo.</span>`;
+                    spinner.style.display = 'none';
+                    document.getElementById('submitBtn').disabled = false;
+                } else {
+                    statusText.innerHTML = `Status: <span style="color: #38bdf8;">${data.status}...</span><br>Estimasi 1-3 menit. Jangan tutup halaman ini.`;
+                    setTimeout(() => checkJobStatus(jobId, apiKey, backendUrl), 8000); 
+                }
+            } catch (error) {
+                statusText.innerHTML = "Gagal mengecek status. Coba periksa koneksi.";
             }
         }
-        modelSelect.addEventListener('change', updateDurationOptions);
-        updateDurationOptions(); // Jalankan sekali saat web pertama kali dibuka
 
-        // 4. LOGIKA PENGIRIMAN KE SERVER RAILWAY
         document.getElementById('videoForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             localStorage.setItem('saved_api_key', apiKeyInput.value);
-
             const submitBtn = document.getElementById('submitBtn');
             const responseBox = document.getElementById('response-box');
+            const statusText = document.getElementById('status-text');
+            const spinner = document.getElementById('loading-spinner');
+            const videoPlayer = document.getElementById('result-video');
+            const downloadBtn = document.getElementById('downloadBtn');
             const formData = new FormData(e.target);
             
-            submitBtn.innerText = "Memproses...";
             submitBtn.disabled = true;
             responseBox.style.display = 'block';
-            responseBox.innerHTML = "<span style='color: #38bdf8;'>Sedang mengunggah gambar dan menghubungi AI...</span>";
+            videoPlayer.style.display = 'none';
+            downloadBtn.style.display = 'none'; // Sembunyikan tombol download saat proses baru mulai
+            spinner.style.display = 'block';
+            statusText.innerHTML = "Mengirim data ke server...";
 
-            // LINK BACKEND RAILWAY KAMU
             const BACKEND_URL = "https://backend-video-production-b350.up.railway.app/api/generate-video"; 
 
             try {
@@ -245,15 +168,14 @@
                 const data = await response.json();
                 
                 if(data.success) {
-                    responseBox.innerHTML = `<span style="color: #4ade80; font-weight:bold;">Berhasil Terkirim ke ${data.model_used}!</span><br><br>Job ID: ${data.job_id || 'Tersimpan'}<br>Status: Sedang di-generate oleh server.`;
+                    statusText.innerHTML = `Job ID diterima: ${data.job_id}<br>Sedang memproses video...`;
+                    checkJobStatus(data.job_id, apiKeyInput.value, BACKEND_URL);
                 } else {
-                    responseBox.innerHTML = `<span style="color: #f87171;">Gagal:</span> ${data.error}`;
+                    statusText.innerHTML = `<span style="color: #f87171;">Gagal:</span> ${data.error}`;
+                    spinner.style.display = 'none'; submitBtn.disabled = false;
                 }
             } catch (error) {
-                responseBox.innerHTML = `<span style="color: #f87171;">Error:</span> Tidak dapat terhubung ke server Railway.`;
-            } finally {
-                submitBtn.innerText = "Mulai Generate Video";
-                submitBtn.disabled = false;
+                statusText.innerHTML = "Error server."; spinner.style.display = 'none'; submitBtn.disabled = false;
             }
         });
     </script>
