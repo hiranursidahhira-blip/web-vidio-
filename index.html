@@ -80,8 +80,7 @@
                     <label>Resolusi (Kualitas):</label>
                     <select name="resolution" id="resSelect" required>
                         <option value="RESOLUTION_1080">1080p (FHD)</option>
-                        <option value="RESOLUTION_720">720p (HD)</option>
-                        <option value="RESOLUTION_480">480p (Hemat 400)</option>
+                        <option value="RESOLUTION_720">720p (HD - Termurah)</option>
                     </select>
                 </div>
             </div>
@@ -98,25 +97,18 @@
     </div>
 
     <script>
-        // 1. FITUR AUTO-SAVE (Anti Hilang saat Refresh)
         const fieldsToSave = ['apiKey', 'modelSelect', 'ratioSelect', 'promptInput', 'resSelect'];
-        
-        // Memuat data lama saat web dibuka
         fieldsToSave.forEach(id => {
             const el = document.getElementById(id);
-            if (el && localStorage.getItem('saved_' + id)) {
-                el.value = localStorage.getItem('saved_' + id);
-            }
+            if (el && localStorage.getItem('saved_' + id)) el.value = localStorage.getItem('saved_' + id);
         });
 
-        // Menyimpan data otomatis setiap kali diketik/diubah
         document.getElementById('videoForm').addEventListener('input', (e) => {
             if (e.target.id && fieldsToSave.includes(e.target.id) || e.target.id === 'durationSelect') {
                 localStorage.setItem('saved_' + e.target.id, e.target.value);
             }
         });
 
-        // 2. LOGIKA PREVIEW GAMBAR
         function setupImagePreview(inputId, previewId, textId, removeId) {
             document.getElementById(inputId).addEventListener('change', function(e) {
                 const file = e.target.files[0];
@@ -136,7 +128,6 @@
         setupImagePreview('image1', 'preview1', 'text1', 'remove1');
         setupImagePreview('image2', 'preview2', 'text2', 'remove2');
 
-        // 3. LOGIKA DURASI DINAMIS
         const modelSelect = document.getElementById('modelSelect');
         const durationSelect = document.getElementById('durationSelect');
         
@@ -150,16 +141,14 @@
                 durationSelect.add(new Option('10 Detik', '10')); 
                 durationSelect.add(new Option('15 Detik', '15')); 
             }
-            // Load ulang durasi dari penyimpanan jika ada
             if (localStorage.getItem('saved_durationSelect')) {
                 durationSelect.value = localStorage.getItem('saved_durationSelect');
             }
         }
-        modelSelect.addEventListener('change', updateDurationOptions); 
-        updateDurationOptions();
+        modelSelect.addEventListener('change', updateDurationOptions); updateDurationOptions();
 
-        // 4. LOGIKA PENGIRIMAN & CEK STATUS
-        async function checkJobStatus(jobId, apiKey, backendUrl) {
+        // LOGIKA PENGECEKAN ANTI-PUTUS (AUTO-RETRY)
+        async function checkJobStatus(jobId, apiKey, backendUrl, attempt = 1) {
             const statusText = document.getElementById('status-text');
             const videoPlayer = document.getElementById('result-video');
             const spinner = document.getElementById('loading-spinner');
@@ -167,30 +156,45 @@
 
             try {
                 const response = await fetch(`${backendUrl.replace('/generate-video', '/check-status')}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ jobId: jobId, apiKey: apiKey })
                 });
-                const data = await response.json();
+
+                const textData = await response.text();
+                let data;
+                
+                try {
+                    data = JSON.parse(textData);
+                } catch (e) {
+                    // Jika gagal parsing, artinya Railway sedang restart / error 502
+                    if (attempt <= 5) {
+                        statusText.innerHTML = `Koneksi ke server goyah. Menyambung ulang... (${attempt}/5)`;
+                        setTimeout(() => checkJobStatus(jobId, apiKey, backendUrl, attempt + 1), 8000);
+                        return;
+                    }
+                    throw new Error("Server Railway sedang down sementara.");
+                }
+
+                if (data.error) throw new Error(data.error);
 
                 if (data.status === 'COMPLETE' && data.video_url) {
                     statusText.innerHTML = `<span style="color: #4ade80; font-weight:bold;">Video Berhasil Dibuat! 🎉</span>`;
                     spinner.style.display = 'none';
-                    videoPlayer.src = data.video_url;
-                    videoPlayer.style.display = 'block';
-                    downloadBtn.href = data.video_url;
-                    downloadBtn.style.display = 'block';
+                    videoPlayer.src = data.video_url; videoPlayer.style.display = 'block';
+                    downloadBtn.href = data.video_url; downloadBtn.style.display = 'block';
                     document.getElementById('submitBtn').disabled = false;
                 } else if (data.status === 'FAILED') {
-                    statusText.innerHTML = `<span style="color: #f87171;">Pembuatan video gagal dari server.</span>`;
-                    spinner.style.display = 'none';
-                    document.getElementById('submitBtn').disabled = false;
+                    statusText.innerHTML = `<span style="color: #f87171;">Gagal dari Leonardo. Silakan coba prompt lain.</span>`;
+                    spinner.style.display = 'none'; document.getElementById('submitBtn').disabled = false;
                 } else {
-                    statusText.innerHTML = `Status: <span style="color: #38bdf8;">${data.status}...</span><br>Tunggu 1-3 menit.`;
-                    setTimeout(() => checkJobStatus(jobId, apiKey, backendUrl), 8000); 
+                    statusText.innerHTML = `Status: <span style="color: #38bdf8;">${data.status}...</span><br>Tunggu 1-3 menit. Jangan tutup layar ini.`;
+                    // Jika sukses merespon, reset attempt kembali ke 1
+                    setTimeout(() => checkJobStatus(jobId, apiKey, backendUrl, 1), 8000); 
                 }
-            } catch (error) {
-                statusText.innerHTML = "Gagal mengecek status.";
+            } catch (error) { 
+                statusText.innerHTML = `<span style="color: #f87171;">Gagal Mengecek: ${error.message}</span>`;
+                spinner.style.display = 'none'; 
+                document.getElementById('submitBtn').disabled = false;
             }
         }
 
@@ -204,12 +208,9 @@
             const downloadBtn = document.getElementById('downloadBtn');
             const formData = new FormData(e.target);
             
-            submitBtn.disabled = true;
-            responseBox.style.display = 'block';
-            videoPlayer.style.display = 'none';
-            downloadBtn.style.display = 'none'; 
-            spinner.style.display = 'block';
-            statusText.innerHTML = "Mengirim data ke server...";
+            submitBtn.disabled = true; responseBox.style.display = 'block';
+            videoPlayer.style.display = 'none'; downloadBtn.style.display = 'none'; 
+            spinner.style.display = 'block'; statusText.innerHTML = "Mengirim data ke server...";
 
             const BACKEND_URL = "https://backend-video-production-b350.up.railway.app/api/generate-video"; 
 
@@ -224,9 +225,7 @@
                     statusText.innerHTML = `<span style="color: #f87171;">Gagal:</span> ${data.error}`;
                     spinner.style.display = 'none'; submitBtn.disabled = false;
                 }
-            } catch (error) {
-                statusText.innerHTML = "Error server."; spinner.style.display = 'none'; submitBtn.disabled = false;
-            }
+            } catch (error) { statusText.innerHTML = "Error server, silakan coba tekan tombol lagi."; spinner.style.display = 'none'; submitBtn.disabled = false; }
         });
     </script>
 </body>
