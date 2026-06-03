@@ -97,6 +97,8 @@
     </div>
 
     <script>
+        const BACKEND_URL = "https://backend-video-production-b350.up.railway.app/api/generate-video"; 
+        
         const fieldsToSave = ['apiKey', 'modelSelect', 'ratioSelect', 'promptInput', 'resSelect'];
         fieldsToSave.forEach(id => {
             const el = document.getElementById(id);
@@ -147,7 +149,6 @@
         }
         modelSelect.addEventListener('change', updateDurationOptions); updateDurationOptions();
 
-        // LOGIKA PENGECEKAN ANTI-PUTUS (AUTO-RETRY)
         async function checkJobStatus(jobId, apiKey, backendUrl, attempt = 1) {
             const statusText = document.getElementById('status-text');
             const videoPlayer = document.getElementById('result-video');
@@ -166,13 +167,7 @@
                 try {
                     data = JSON.parse(textData);
                 } catch (e) {
-                    // Jika gagal parsing, artinya Railway sedang restart / error 502
-                    if (attempt <= 5) {
-                        statusText.innerHTML = `Koneksi ke server goyah. Menyambung ulang... (${attempt}/5)`;
-                        setTimeout(() => checkJobStatus(jobId, apiKey, backendUrl, attempt + 1), 8000);
-                        return;
-                    }
-                    throw new Error("Server Railway sedang down sementara.");
+                    throw new Error("Gagal membaca data dari server");
                 }
 
                 if (data.error) throw new Error(data.error);
@@ -183,20 +178,49 @@
                     videoPlayer.src = data.video_url; videoPlayer.style.display = 'block';
                     downloadBtn.href = data.video_url; downloadBtn.style.display = 'block';
                     document.getElementById('submitBtn').disabled = false;
+                    
+                    // PROSES SELESAI: Hapus memori Job ID agar bisa buat video baru
+                    localStorage.removeItem('active_job_id');
+
                 } else if (data.status === 'FAILED') {
                     statusText.innerHTML = `<span style="color: #f87171;">Gagal dari Leonardo. Silakan coba prompt lain.</span>`;
                     spinner.style.display = 'none'; document.getElementById('submitBtn').disabled = false;
+                    
+                    // PROSES GAGAL: Hapus memori Job ID
+                    localStorage.removeItem('active_job_id');
+
                 } else {
-                    statusText.innerHTML = `Status: <span style="color: #38bdf8;">${data.status}...</span><br>Tunggu 1-3 menit. Jangan tutup layar ini.`;
-                    // Jika sukses merespon, reset attempt kembali ke 1
+                    statusText.innerHTML = `Status: <span style="color: #38bdf8;">${data.status}...</span><br>Bisa ditinggal tidur/tutup web. Nanti buka lagi saja.`;
                     setTimeout(() => checkJobStatus(jobId, apiKey, backendUrl, 1), 8000); 
                 }
             } catch (error) { 
-                statusText.innerHTML = `<span style="color: #f87171;">Gagal Mengecek: ${error.message}</span>`;
-                spinner.style.display = 'none'; 
-                document.getElementById('submitBtn').disabled = false;
+                if (attempt <= 10) {
+                    statusText.innerHTML = `Sinyal terputus. Menyambung ulang otomatis... (${attempt}/10)`;
+                    setTimeout(() => checkJobStatus(jobId, apiKey, backendUrl, attempt + 1), 8000);
+                } else {
+                    statusText.innerHTML = `<span style="color: #f87171;">Koneksi terputus total. Silakan refresh halaman.</span>`;
+                    spinner.style.display = 'none'; 
+                    document.getElementById('submitBtn').disabled = false;
+                }
             }
         }
+
+        // FITUR BARU: CEK MEMORI SAAT WEB DIBUKA
+        window.addEventListener('DOMContentLoaded', () => {
+            const activeJobId = localStorage.getItem('active_job_id');
+            const savedApiKey = localStorage.getItem('saved_apiKey');
+            
+            if (activeJobId && savedApiKey) {
+                // Ada video yang sedang antre! Munculkan kotak loading lagi.
+                document.getElementById('submitBtn').disabled = true;
+                document.getElementById('response-box').style.display = 'block';
+                document.getElementById('loading-spinner').style.display = 'block';
+                document.getElementById('status-text').innerHTML = "Melanjutkan pemantauan video sebelumnya...";
+                
+                // Lanjutkan pengecekan
+                checkJobStatus(activeJobId, savedApiKey, BACKEND_URL);
+            }
+        });
 
         document.getElementById('videoForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -207,12 +231,11 @@
             const videoPlayer = document.getElementById('result-video');
             const downloadBtn = document.getElementById('downloadBtn');
             const formData = new FormData(e.target);
+            const apiKeyVal = document.getElementById('apiKey').value;
             
             submitBtn.disabled = true; responseBox.style.display = 'block';
             videoPlayer.style.display = 'none'; downloadBtn.style.display = 'none'; 
             spinner.style.display = 'block'; statusText.innerHTML = "Mengirim data ke server...";
-
-            const BACKEND_URL = "https://backend-video-production-b350.up.railway.app/api/generate-video"; 
 
             try {
                 const response = await fetch(BACKEND_URL, { method: 'POST', body: formData });
@@ -220,12 +243,19 @@
                 
                 if(data.success) {
                     statusText.innerHTML = `Menerima Resi Video...<br>Sedang merender video...`;
-                    checkJobStatus(data.job_id, document.getElementById('apiKey').value, BACKEND_URL);
+                    
+                    // SIMPAN RESI KE MEMORI HP
+                    localStorage.setItem('active_job_id', data.job_id);
+                    
+                    checkJobStatus(data.job_id, apiKeyVal, BACKEND_URL);
                 } else {
                     statusText.innerHTML = `<span style="color: #f87171;">Gagal:</span> ${data.error}`;
                     spinner.style.display = 'none'; submitBtn.disabled = false;
                 }
-            } catch (error) { statusText.innerHTML = "Error server, silakan coba tekan tombol lagi."; spinner.style.display = 'none'; submitBtn.disabled = false; }
+            } catch (error) { 
+                statusText.innerHTML = "Error server gagal mengirim. Silakan cek koneksi dan klik tombol lagi."; 
+                spinner.style.display = 'none'; submitBtn.disabled = false; 
+            }
         });
     </script>
 </body>
