@@ -37,7 +37,7 @@
              -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .form-group { margin-bottom: 20px; }
         label { display: block; margin-bottom: 8px; font-weight: 600; font-size: 13px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;}
-        input[type="text"], input[type="password"], input[type="file"], select, textarea { 
+        input[type="text"], input[type="password"], select, textarea { 
             width: 100%; padding: 14px; border-radius: 10px; border: 1px solid #334155; 
             background-color: rgba(15, 23, 42, 0.6); color: white; box-sizing: border-box; 
             font-size: 15px; transition: all 0.3s ease; outline: none;
@@ -45,13 +45,53 @@
         input:focus, select:focus, textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2); }
         textarea { resize: vertical; min-height: 80px; }
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        button { 
+        
+        /* STYLE UNTUK UPLOAD GAMBAR SEPERTI REFERENSI */
+        .upload-box {
+            position: relative;
+            border: 2px dashed #475569;
+            border-radius: 12px;
+            background-color: rgba(15, 23, 42, 0.4);
+            height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            overflow: hidden;
+            transition: 0.3s;
+        }
+        .upload-box:hover { border-color: var(--primary); background: rgba(139, 92, 246, 0.1); }
+        .upload-text { font-size: 13px; color: var(--text-muted); pointer-events: none; padding: 10px; }
+        .file-input {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            opacity: 0; cursor: pointer; z-index: 2;
+        }
+        .preview-img {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            object-fit: cover;
+            display: none; z-index: 1;
+        }
+        .remove-btn {
+            position: absolute;
+            top: 8px; right: 8px;
+            background-color: #ef4444; color: white;
+            width: 26px; height: 26px;
+            border-radius: 50%;
+            display: none; align-items: center; justify-content: center;
+            font-size: 14px; font-weight: bold;
+            cursor: pointer; z-index: 10;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+        }
+
+        button.submit-btn { 
             width: 100%; padding: 16px; background: linear-gradient(to right, var(--primary), var(--secondary)); 
             color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; 
             cursor: pointer; margin-top: 15px; transition: transform 0.2s, box-shadow 0.2s; 
         }
-        button:hover { transform: translateY(-2px); box-shadow: 0 10px 20px -10px var(--secondary); }
-        button:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
+        button.submit-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 20px -10px var(--secondary); }
+        button.submit-btn:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
         #response-box { 
             margin-top: 25px; padding: 20px; border-radius: 10px; background-color: rgba(0,0,0,0.3); 
             display: none; font-size: 14px; word-break: break-all; border-left: 4px solid var(--primary); 
@@ -82,24 +122,31 @@
                 <textarea name="prompt" placeholder="Contoh: Animate this landscape with birds flying and wind blowing through trees..." required></textarea>
             </div>
 
-            <div class="grid-2">
-                <div class="form-group">
-                    <label>Gambar 1 (Awal):</label>
-                    <input type="file" id="image1" name="images" accept="image/*" required>
+            <div class="form-group">
+                <label>Gambar 1 (Awal - Wajib):</label>
+                <div class="upload-box" id="box1">
+                    <span class="upload-text" id="text1">Klik Upload Foto 1</span>
+                    <input type="file" id="image1" name="images" accept="image/*" class="file-input" required>
+                    <img id="preview1" class="preview-img" src="" alt="Preview">
+                    <div class="remove-btn" id="remove1">X</div>
                 </div>
-                <div class="form-group">
-                    <label>Gambar 2 (Akhir):</label>
-                    <input type="file" id="image2" name="images" accept="image/*">
+            </div>
+
+            <div class="form-group">
+                <label>Gambar 2 (Akhir - Opsional):</label>
+                <div class="upload-box" id="box2">
+                    <span class="upload-text" id="text2">Klik Upload Foto 2</span>
+                    <input type="file" id="image2" name="images" accept="image/*" class="file-input">
+                    <img id="preview2" class="preview-img" src="" alt="Preview">
+                    <div class="remove-btn" id="remove2">X</div>
                 </div>
             </div>
 
             <div class="grid-2">
                 <div class="form-group">
                     <label>Durasi:</label>
-                    <select name="duration" required>
-                        <option value="5">5 Detik</option>
-                        <option value="8">8 Detik</option>
-                    </select>
+                    <select name="duration" id="durationSelect" required>
+                        </select>
                 </div>
                 <div class="form-group">
                     <label>Resolusi:</label>
@@ -110,16 +157,73 @@
                 </div>
             </div>
 
-            <button type="submit" id="submitBtn">Mulai Generate Video</button>
+            <button type="submit" id="submitBtn" class="submit-btn">Mulai Generate Video</button>
         </form>
 
         <div id="response-box"></div>
     </div>
 
     <script>
+        // 1. SIMPAN API KEY OTOMATIS
         const apiKeyInput = document.getElementById('apiKey');
         if (localStorage.getItem('saved_api_key')) apiKeyInput.value = localStorage.getItem('saved_api_key');
 
+        // 2. LOGIKA UPLOAD GAMBAR & PREVIEW (FOTO MUNCUL)
+        function setupImagePreview(inputId, previewId, textId, removeId) {
+            const input = document.getElementById(inputId);
+            const preview = document.getElementById(previewId);
+            const text = document.getElementById(textId);
+            const removeBtn = document.getElementById(removeId);
+
+            input.addEventListener('change', function() {
+                const file = this.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        preview.src = e.target.result;
+                        preview.style.display = 'block';
+                        text.style.display = 'none';
+                        removeBtn.style.display = 'flex';
+                    }
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            removeBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation(); // Mencegah kotak upload ter-klik saat menekan X
+                input.value = '';
+                preview.src = '';
+                preview.style.display = 'none';
+                text.style.display = 'block';
+                removeBtn.style.display = 'none';
+            });
+        }
+        setupImagePreview('image1', 'preview1', 'text1', 'remove1');
+        setupImagePreview('image2', 'preview2', 'text2', 'remove2');
+
+        // 3. LOGIKA SMART DURATION (DURASI MENYESUAIKAN MODEL)
+        const modelSelect = document.getElementById('modelSelect');
+        const durationSelect = document.getElementById('durationSelect');
+
+        function updateDurationOptions() {
+            const selectedModel = modelSelect.value;
+            durationSelect.innerHTML = ''; // Kosongkan opsi sebelumnya
+            
+            if (selectedModel === 'VEO3_1') {
+                durationSelect.add(new Option('5 Detik', '5'));
+                durationSelect.add(new Option('8 Detik', '8'));
+            } else {
+                // Untuk Kling 3.0 dan Seedance 2.0
+                durationSelect.add(new Option('5 Detik', '5'));
+                durationSelect.add(new Option('10 Detik', '10'));
+                durationSelect.add(new Option('15 Detik', '15'));
+            }
+        }
+        modelSelect.addEventListener('change', updateDurationOptions);
+        updateDurationOptions(); // Jalankan sekali saat web pertama kali dibuka
+
+        // 4. LOGIKA PENGIRIMAN KE SERVER RAILWAY
         document.getElementById('videoForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             localStorage.setItem('saved_api_key', apiKeyInput.value);
@@ -133,7 +237,7 @@
             responseBox.style.display = 'block';
             responseBox.innerHTML = "<span style='color: #38bdf8;'>Sedang mengunggah gambar dan menghubungi AI...</span>";
 
-            // PASTIKAN LINK INI ADALAH LINK RAILWAY KAMU
+            // LINK BACKEND RAILWAY KAMU
             const BACKEND_URL = "https://backend-video-production-b350.up.railway.app/api/generate-video"; 
 
             try {
@@ -141,7 +245,7 @@
                 const data = await response.json();
                 
                 if(data.success) {
-                    responseBox.innerHTML = `<span style="color: #4ade80; font-weight:bold;">Berhasil Terkirim ke ${data.model_used}!</span><br><br>Job ID: ${data.job_id || 'Tersimpan'}<br>Status: Sedang di-generate oleh server Leonardo.`;
+                    responseBox.innerHTML = `<span style="color: #4ade80; font-weight:bold;">Berhasil Terkirim ke ${data.model_used}!</span><br><br>Job ID: ${data.job_id || 'Tersimpan'}<br>Status: Sedang di-generate oleh server.`;
                 } else {
                     responseBox.innerHTML = `<span style="color: #f87171;">Gagal:</span> ${data.error}`;
                 }
