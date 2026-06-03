@@ -17,13 +17,11 @@
         .file-input { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; z-index: 2; }
         .preview-img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; display: none; z-index: 1; }
         .remove-btn { position: absolute; top: 8px; right: 8px; background: #ef4444; color: white; width: 26px; height: 26px; border-radius: 50%; display: none; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; cursor: pointer; z-index: 10; }
-        
         button.submit-btn, a.download-btn { width: 100%; padding: 16px; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 15px; display: block; box-sizing: border-box; }
         button.submit-btn { background: linear-gradient(to right, var(--primary), var(--secondary)); color: white; }
         button.submit-btn:disabled { opacity: 0.7; cursor: not-allowed; }
         a.download-btn { background: linear-gradient(to right, #10b981, #059669); color: white; text-align: center; text-decoration: none; display: none; }
         a.download-btn:hover { box-shadow: 0 10px 20px -10px #10b981; }
-
         #response-box { margin-top: 25px; padding: 20px; border-radius: 10px; background-color: rgba(0,0,0,0.3); display: none; font-size: 14px; border-left: 4px solid var(--primary); text-align: center; }
         .loader { border: 4px solid rgba(255,255,255,0.1); border-top: 4px solid var(--primary); border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 10px auto; display: none; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -36,15 +34,27 @@
         <h2>AI Pro Video Studio</h2>
         <form id="videoForm">
             <div class="form-group"><label>API Key Leonardo:</label><input type="password" id="apiKey" name="apiKey" required></div>
-            <div class="form-group">
-                <label>Model AI Video:</label>
-                <select name="model" id="modelSelect" required>
-                    <option value="kling-3.0">Kling 3.0</option>
-                    <option value="seedance-2.0">Seedance 2.0</option>
-                    <option value="VEO3_1">Google Veo 3.1</option>
-                </select>
+            
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>Model AI Video:</label>
+                    <select name="model" id="modelSelect" required>
+                        <option value="kling-3.0">Kling 3.0</option>
+                        <option value="seedance-2.0">Seedance 2.0</option>
+                        <option value="VEO3_1">Google Veo 3.1</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Rasio Video:</label>
+                    <select name="ratio" id="ratioSelect" required>
+                        <option value="16:9">16:9 (Landscape)</option>
+                        <option value="9:16">9:16 (Portrait)</option>
+                        <option value="1:1">1:1 (Square)</option>
+                    </select>
+                </div>
             </div>
-            <div class="form-group"><label>Prompt:</label><textarea name="prompt" required></textarea></div>
+
+            <div class="form-group"><label>Prompt:</label><textarea name="prompt" id="promptInput" required></textarea></div>
             
             <div class="form-group">
                 <label>Gambar 1 (Awal - Wajib):</label>
@@ -65,15 +75,13 @@
             </div>
 
             <div class="grid-2">
+                <div class="form-group"><label>Durasi:</label><select name="duration" id="durationSelect"></select></div>
                 <div class="form-group">
-                    <label>Durasi:</label>
-                    <select name="duration" id="durationSelect"></select>
-                </div>
-                <div class="form-group">
-                    <label>Resolusi:</label>
-                    <select name="resolution" required>
+                    <label>Resolusi (Kualitas):</label>
+                    <select name="resolution" id="resSelect" required>
                         <option value="RESOLUTION_1080">1080p (FHD)</option>
                         <option value="RESOLUTION_720">720p (HD)</option>
+                        <option value="RESOLUTION_480">480p (Hemat 400)</option>
                     </select>
                 </div>
             </div>
@@ -90,9 +98,25 @@
     </div>
 
     <script>
-        const apiKeyInput = document.getElementById('apiKey');
-        if (localStorage.getItem('saved_api_key')) apiKeyInput.value = localStorage.getItem('saved_api_key');
+        // 1. FITUR AUTO-SAVE (Anti Hilang saat Refresh)
+        const fieldsToSave = ['apiKey', 'modelSelect', 'ratioSelect', 'promptInput', 'resSelect'];
+        
+        // Memuat data lama saat web dibuka
+        fieldsToSave.forEach(id => {
+            const el = document.getElementById(id);
+            if (el && localStorage.getItem('saved_' + id)) {
+                el.value = localStorage.getItem('saved_' + id);
+            }
+        });
 
+        // Menyimpan data otomatis setiap kali diketik/diubah
+        document.getElementById('videoForm').addEventListener('input', (e) => {
+            if (e.target.id && fieldsToSave.includes(e.target.id) || e.target.id === 'durationSelect') {
+                localStorage.setItem('saved_' + e.target.id, e.target.value);
+            }
+        });
+
+        // 2. LOGIKA PREVIEW GAMBAR
         function setupImagePreview(inputId, previewId, textId, removeId) {
             document.getElementById(inputId).addEventListener('change', function(e) {
                 const file = e.target.files[0];
@@ -109,10 +133,10 @@
                 this.style.display = 'none'; document.getElementById(textId).style.display = 'block';
             });
         }
-        
         setupImagePreview('image1', 'preview1', 'text1', 'remove1');
         setupImagePreview('image2', 'preview2', 'text2', 'remove2');
 
+        // 3. LOGIKA DURASI DINAMIS
         const modelSelect = document.getElementById('modelSelect');
         const durationSelect = document.getElementById('durationSelect');
         
@@ -126,10 +150,15 @@
                 durationSelect.add(new Option('10 Detik', '10')); 
                 durationSelect.add(new Option('15 Detik', '15')); 
             }
+            // Load ulang durasi dari penyimpanan jika ada
+            if (localStorage.getItem('saved_durationSelect')) {
+                durationSelect.value = localStorage.getItem('saved_durationSelect');
+            }
         }
         modelSelect.addEventListener('change', updateDurationOptions); 
         updateDurationOptions();
 
+        // 4. LOGIKA PENGIRIMAN & CEK STATUS
         async function checkJobStatus(jobId, apiKey, backendUrl) {
             const statusText = document.getElementById('status-text');
             const videoPlayer = document.getElementById('result-video');
@@ -157,17 +186,16 @@
                     spinner.style.display = 'none';
                     document.getElementById('submitBtn').disabled = false;
                 } else {
-                    statusText.innerHTML = `Status: <span style="color: #38bdf8;">${data.status}...</span><br>Estimasi 1-3 menit. Jangan tutup halaman ini.`;
+                    statusText.innerHTML = `Status: <span style="color: #38bdf8;">${data.status}...</span><br>Tunggu 1-3 menit.`;
                     setTimeout(() => checkJobStatus(jobId, apiKey, backendUrl), 8000); 
                 }
             } catch (error) {
-                statusText.innerHTML = "Gagal mengecek status. Coba periksa koneksi.";
+                statusText.innerHTML = "Gagal mengecek status.";
             }
         }
 
         document.getElementById('videoForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            localStorage.setItem('saved_api_key', apiKeyInput.value);
             const submitBtn = document.getElementById('submitBtn');
             const responseBox = document.getElementById('response-box');
             const statusText = document.getElementById('status-text');
@@ -190,8 +218,8 @@
                 const data = await response.json();
                 
                 if(data.success) {
-                    statusText.innerHTML = `Job ID diterima: ${data.job_id}<br>Sedang memproses video...`;
-                    checkJobStatus(data.job_id, apiKeyInput.value, BACKEND_URL);
+                    statusText.innerHTML = `Menerima Resi Video...<br>Sedang merender video...`;
+                    checkJobStatus(data.job_id, document.getElementById('apiKey').value, BACKEND_URL);
                 } else {
                     statusText.innerHTML = `<span style="color: #f87171;">Gagal:</span> ${data.error}`;
                     spinner.style.display = 'none'; submitBtn.disabled = false;
