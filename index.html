@@ -3,57 +3,114 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Video Generator</title>
+    <title>AI Pro Video Studio</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #121212; color: #ffffff; padding: 20px; display: flex; justify-content: center; }
-        .container { background-color: #1e1e1e; padding: 25px; border-radius: 12px; width: 100%; max-width: 450px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
-        h2 { text-align: center; margin-bottom: 20px; font-size: 22px; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 8px; font-weight: 500; font-size: 14px; color: #a5b4fc; }
-        input[type="text"], input[type="password"], input[type="file"], select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #333; background-color: #2a2a2a; color: white; box-sizing: border-box; font-size: 14px; }
-        button { width: 100%; padding: 14px; background-color: #6366f1; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; transition: 0.3s; }
-        button:hover { background-color: #4f46e5; }
-        #response-box { margin-top: 20px; padding: 15px; border-radius: 8px; background-color: #2a2a2a; display: none; font-size: 14px; word-break: break-all; border-left: 4px solid #6366f1; }
+        :root {
+            --primary: #8b5cf6;
+            --secondary: #ec4899;
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+        body { 
+            font-family: 'Inter', -apple-system, sans-serif; 
+            background-color: var(--bg-color); 
+            color: var(--text-main); 
+            margin: 0; padding: 40px 20px; 
+            display: flex; justify-content: center; 
+            background-image: radial-gradient(circle at top right, #1e1b4b, #0f172a);
+            min-height: 100vh;
+        }
+        .container { 
+            background: rgba(30, 41, 59, 0.7); 
+            backdrop-filter: blur(12px);
+            padding: 35px; 
+            border-radius: 20px; 
+            width: 100%; 
+            max-width: 550px; 
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); 
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        h2 { text-align: center; margin-top: 0; margin-bottom: 30px; font-size: 28px; 
+             background: -webkit-linear-gradient(45deg, var(--primary), var(--secondary)); 
+             -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: 600; font-size: 13px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;}
+        input[type="text"], input[type="password"], input[type="file"], select, textarea { 
+            width: 100%; padding: 14px; border-radius: 10px; border: 1px solid #334155; 
+            background-color: rgba(15, 23, 42, 0.6); color: white; box-sizing: border-box; 
+            font-size: 15px; transition: all 0.3s ease; outline: none;
+        }
+        input:focus, select:focus, textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2); }
+        textarea { resize: vertical; min-height: 80px; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        button { 
+            width: 100%; padding: 16px; background: linear-gradient(to right, var(--primary), var(--secondary)); 
+            color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; 
+            cursor: pointer; margin-top: 15px; transition: transform 0.2s, box-shadow 0.2s; 
+        }
+        button:hover { transform: translateY(-2px); box-shadow: 0 10px 20px -10px var(--secondary); }
+        button:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
+        #response-box { 
+            margin-top: 25px; padding: 20px; border-radius: 10px; background-color: rgba(0,0,0,0.3); 
+            display: none; font-size: 14px; word-break: break-all; border-left: 4px solid var(--primary); 
+        }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h2>AI Video Generator</h2>
+        <h2>AI Pro Video Studio</h2>
         <form id="videoForm">
             <div class="form-group">
-                <label>Leonardo AI API Key:</label>
-                <input type="password" id="apiKey" name="apiKey" placeholder="Masukkan API Key di sini" required>
+                <label>API Key Leonardo:</label>
+                <input type="password" id="apiKey" name="apiKey" placeholder="Sk-xxxxxxxxxxx" required>
             </div>
 
             <div class="form-group">
-                <label>Karakter 1 (Gambar):</label>
-                <input type="file" id="image1" name="images" accept="image/*" required>
-            </div>
-            
-            <div class="form-group">
-                <label>Karakter 2 (Gambar):</label>
-                <input type="file" id="image2" name="images" accept="image/*" required>
-            </div>
-
-            <div class="form-group">
-                <label>Pilih Rasio Video:</label>
-                <select name="ratio" required>
-                    <option value="16:9">16:9 (Landscape - YouTube)</option>
-                    <option value="9:16">9:16 (Portrait - TikTok/Reels)</option>
-                    <option value="1:1">1:1 (Square - Instagram)</option>
+                <label>Model AI Video:</label>
+                <select name="model" id="modelSelect" required>
+                    <option value="kling-3.0">Kling 3.0 (Cinematic & Realism)</option>
+                    <option value="seedance-2.0">Seedance 2.0 (Dynamic Motion)</option>
+                    <option value="VEO3_1">Google Veo 3.1 (High Consistency)</option>
                 </select>
             </div>
 
             <div class="form-group">
-                <label>Pilih Kualitas:</label>
-                <select name="quality" required>
-                    <option value="high">High Quality</option>
-                    <option value="standard">Standard Quality</option>
-                </select>
+                <label>Prompt (Perintah Video):</label>
+                <textarea name="prompt" placeholder="Contoh: Animate this landscape with birds flying and wind blowing through trees..." required></textarea>
             </div>
 
-            <button type="submit" id="submitBtn">Generate Video</button>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>Gambar 1 (Awal):</label>
+                    <input type="file" id="image1" name="images" accept="image/*" required>
+                </div>
+                <div class="form-group">
+                    <label>Gambar 2 (Akhir):</label>
+                    <input type="file" id="image2" name="images" accept="image/*">
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>Durasi:</label>
+                    <select name="duration" required>
+                        <option value="5">5 Detik</option>
+                        <option value="8">8 Detik</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Resolusi:</label>
+                    <select name="resolution" required>
+                        <option value="RESOLUTION_1080">1080p (FHD)</option>
+                        <option value="RESOLUTION_720">720p (HD)</option>
+                    </select>
+                </div>
+            </div>
+
+            <button type="submit" id="submitBtn">Mulai Generate Video</button>
         </form>
 
         <div id="response-box"></div>
@@ -61,13 +118,10 @@
 
     <script>
         const apiKeyInput = document.getElementById('apiKey');
-        if (localStorage.getItem('saved_api_key')) {
-            apiKeyInput.value = localStorage.getItem('saved_api_key');
-        }
+        if (localStorage.getItem('saved_api_key')) apiKeyInput.value = localStorage.getItem('saved_api_key');
 
         document.getElementById('videoForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            
             localStorage.setItem('saved_api_key', apiKeyInput.value);
 
             const submitBtn = document.getElementById('submitBtn');
@@ -77,28 +131,24 @@
             submitBtn.innerText = "Memproses...";
             submitBtn.disabled = true;
             responseBox.style.display = 'block';
-            responseBox.innerHTML = "Mengirim data ke server...";
+            responseBox.innerHTML = "<span style='color: #38bdf8;'>Sedang mengunggah gambar dan menghubungi AI...</span>";
 
-            // Link Railway sudah dimasukkan secara otomatis di sini
+            // PASTIKAN LINK INI ADALAH LINK RAILWAY KAMU
             const BACKEND_URL = "https://backend-video-production-b350.up.railway.app/api/generate-video"; 
 
             try {
-                const response = await fetch(BACKEND_URL, {
-                    method: 'POST',
-                    body: formData
-                });
-                
+                const response = await fetch(BACKEND_URL, { method: 'POST', body: formData });
                 const data = await response.json();
                 
                 if(data.success) {
-                    responseBox.innerHTML = `<span style="color: #4ade80;">Berhasil!</span><br>Pesan: ${data.message}<br>Status: ${data.data.status}`;
+                    responseBox.innerHTML = `<span style="color: #4ade80; font-weight:bold;">Berhasil Terkirim ke ${data.model_used}!</span><br><br>Job ID: ${data.job_id || 'Tersimpan'}<br>Status: Sedang di-generate oleh server Leonardo.`;
                 } else {
                     responseBox.innerHTML = `<span style="color: #f87171;">Gagal:</span> ${data.error}`;
                 }
             } catch (error) {
                 responseBox.innerHTML = `<span style="color: #f87171;">Error:</span> Tidak dapat terhubung ke server Railway.`;
             } finally {
-                submitBtn.innerText = "Generate Video";
+                submitBtn.innerText = "Mulai Generate Video";
                 submitBtn.disabled = false;
             }
         });
